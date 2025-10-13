@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperação de Senha - Galaxia Store</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="universe-bg">
+        <div class="stars"></div>
+        <div class="comet"></div>
+        <div class="planet planet-1"></div>
+        <div class="planet planet-2"></div>
+    </div>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>🔐 Recuperar Senha</h2>
+                <p>Recupere o acesso à sua conta cósmica</p>
+            </div>
+
+            <form id="recuperacao-form" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <button type="submit" class="btn-auth">Enviar Link de Recuperação</button>
+            </form>
+
+            <div class="auth-links">
+                <a href="login.html">Lembrou sua senha?</a>
+                <a href="cadastro.html">Criar nova conta</a>
+            </div>
+
+            <div id="mensagem" class="mensagem"></div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

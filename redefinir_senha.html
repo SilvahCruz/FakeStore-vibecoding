@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha - Galaxia Store</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="universe-bg">
+        <div class="stars"></div>
+        <div class="comet"></div>
+        <div class="planet planet-1"></div>
+        <div class="planet planet-2"></div>
+    </div>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>🔄 Redefinir Senha</h2>
+                <p>Crie uma nova senha para sua conta</p>
+            </div>
+
+            <form id="redefinir-form" class="auth-form">
+                <input type="hidden" id="token" name="token">
+
+                <div class="form-group">
+                    <label for="senha">Nova Senha:</label>
+                    <input type="password" id="senha" name="senha" minlength="6" required>
+                    <small>Mínimo 6 caracteres</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmar_senha">Confirmar Nova Senha:</label>
+                    <input type="password" id="confirmar_senha" name="confirmar_senha" required>
+                </div>
+
+                <button type="submit" class="btn-auth">Redefinir Senha</button>
+            </form>
+
+            <div class="auth-links">
+                <a href="login.html">Fazer login</a>
+            </div>
+
+            <div id="mensagem" class="mensagem"></div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

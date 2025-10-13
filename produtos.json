@@ -1,0 +1,38 @@
+[
+    {
+        "id": "1",
+        "nome": "Camiseta Nebulosa",
+        "preco": 79.90,
+        "categoria": "camisetas",
+        "descricao": "Camiseta com estampa de nebulosa cósmica",
+        "imagem": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400",
+        "destaque": true
+    },
+    {
+        "id": "2",
+        "nome": "Moleton Via Láctea",
+        "preco": 149.90,
+        "categoria": "moletons",
+        "descricao": "Moleton comfort com estampa da via láctea",
+        "imagem": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400",
+        "destaque": true
+    },
+    {
+        "id": "3",
+        "nome": "Boné Astronauta",
+        "preco": 49.90,
+        "categoria": "acessorios",
+        "descricao": "Boné estilo baseball com logo espacial",
+        "imagem": "https://images.unsplash.com/photo-1588850561407-5d44d8cdea49?w=400",
+        "destaque": false
+    },
+    {
+        "id": "4",
+        "nome": "Camiseta Constelações",
+        "preco": 69.90,
+        "categoria": "camisetas",
+        "descricao": "Camiseta com mapa de constelações",
+        "imagem": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400",
+        "destaque": true
+    }
+]
