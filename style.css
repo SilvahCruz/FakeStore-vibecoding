@@ -2065,3 +2065,72 @@ footer p {
         flex-direction: column;
     }
 }
+
+/* Logo Saturno */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.logo:hover {
+    transform: translateY(-2px);
+}
+
+.logo-saturno {
+    width: 40px;
+    height: 40px;
+    background: #FBBF24;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+.logo-saturno::before {
+    content: '';
+    position: absolute;
+    width: 56px;
+    height: 16px;
+    border: 2px solid #D97706;
+    border-radius: 50%;
+    opacity: 0.8;
+}
+
+.logo-saturno::after {
+    content: '';
+    position: absolute;
+    width: 48px;
+    height: 12px;
+    border: 1px solid #F59E0B;
+    border-radius: 50%;
+    opacity: 0.6;
+}
+
+.logo-detalhe {
+    position: absolute;
+    background: #D97706;
+    border-radius: 50%;
+    opacity: 0.7;
+}
+
+.logo-detalhe-1 {
+    width: 6px;
+    height: 6px;
+    top: 8px;
+    left: 8px;
+}
+
+.logo-detalhe-2 {
+    width: 4px;
+    height: 4px;
+    bottom: 10px;
+    right: 8px;
+}

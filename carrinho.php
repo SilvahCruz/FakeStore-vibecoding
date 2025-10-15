@@ -52,15 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['atualizar_carrinho'])
     header('Location: carrinho.php');
     exit;
 }
-
-// Processar finalização da compra
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalizar_compra'])) {
-    if (count($itens_carrinho) > 0) {
-        $_SESSION['checkout_produtos'] = $itens_carrinho;
-        header('Location: checkout.php');
-        exit;
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -133,9 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalizar_compra'])) 
                                 <div class="item-info">
                                     <h4><?= htmlspecialchars($item['nome']) ?></h4>
                                     <p class="preco">R$ <?= number_format($item['preco'], 2, ',', '.') ?></p>
-                                    <div class="item-detalhes">
-                                        <span class="cor-tamanho">Cor: <?= htmlspecialchars($item['cor']) ?> | Tamanho: <?= htmlspecialchars($item['tamanho']) ?></span>
-                                    </div>
                                 </div>
                                 
                                 <div class="item-quantity">
@@ -200,10 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalizar_compra'])) 
                         <span class="total-preco">R$ <?= number_format($total, 2, ',', '.') ?></span>
                     </div>
                     
-                    <form method="POST">
-                        <input type="hidden" name="finalizar_compra" value="1">
-                        <button type="submit" class="btn-finalizar">💳 Finalizar Compra</button>
-                    </form>
+                    <button class="btn-finalizar">💳 Finalizar Compra</button>
                     
                     <div class="pagamento-info">
                         <p>🔒 Compra 100% segura</p>
@@ -236,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalizar_compra'])) 
             <div class="footer-section">
                 <h4>Contato</h4>
                 <p>📧 contato@galaxiastore.com</p>
-                <p>📱 (11) 96798-8042</p>
+                <p>📱 (11) 99999-9999</p>
             </div>
         </div>
         <div class="footer-bottom">
@@ -249,6 +234,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalizar_compra'])) 
         setTimeout(() => {
             document.querySelector('.page-transition').style.opacity = '0';
         }, 500);
+        
+        // Finalizar compra
+        document.querySelector('.btn-finalizar')?.addEventListener('click', function() {
+            alert('Compra finalizada com sucesso! 🎉\nEm uma loja real, aqui seria o checkout.');
+        });
     });
     
     document.querySelectorAll('a').forEach(link => {
