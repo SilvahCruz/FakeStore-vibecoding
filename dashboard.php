@@ -200,21 +200,21 @@ $estatisticas = $stmt_stats->fetch(PDO::FETCH_ASSOC);
                     <div class="dashboard-produtos">
                         <?php foreach ($produtos as $produto): ?>
                         <div class="dashboard-produto">
-                            <img src="<?= $produto['imagem'] ?>" alt="<?= $produto['nome'] ?>">
+                            <img src="<?= $produto['imagem'] ?>" alt="<?= $produto['nome'] ?>" width="80" height="80">
                             <div class="produto-info">
                                 <h4><?= $produto['nome'] ?></h4>
                                 <p>R$ <?= number_format($produto['preco'], 2, ',', '.') ?></p>
                                 <span class="categoria"><?= ucfirst($produto['categoria']) ?></span>
                                 <?php if ($produto['destaque']): ?>
-                                    <span class="destaque-badge">Destaque</span>
+                                    <span class="destaque-badge">⭐ Destaque</span>
                                 <?php endif; ?>
                             </div>
                             <div class="produto-actions">
-                                <button class="btn-editar" onclick="editarProduto('<?= $produto['id'] ?>')">Editar</button>
+                                <button class="btn-editar" onclick="editarProduto(<?= $produto['id'] ?>)">✏️ Editar</button>
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="acao" value="remover">
                                     <input type="hidden" name="id" value="<?= $produto['id'] ?>">
-                                    <button type="submit" class="btn-remover" onclick="return confirm('Tem certeza?')">Remover</button>
+                                    <button type="submit" class="btn-remover" onclick="return confirm('Tem certeza que deseja remover este produto?')">🗑️ Remover</button>
                                 </form>
                             </div>
                         </div>
@@ -253,29 +253,79 @@ $estatisticas = $stmt_stats->fetch(PDO::FETCH_ASSOC);
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
-            document.querySelector('.page-transition').style.opacity = '0';
+            const pageTransition = document.querySelector('.page-transition');
+            if (pageTransition) {
+                pageTransition.style.opacity = '0';
+            }
         }, 500);
         
-        function editarProduto(id) {
-            document.getElementById('form-titulo').textContent = '✏️ Editar Produto';
-            document.getElementById('acao').value = 'editar';
-            document.getElementById('produto-id').value = id;
-            document.getElementById('btn-cancelar').style.display = 'inline-block';
-        }
+        // Tornar a função global para o HTML poder chamar
+        window.editarProduto = function(id) {
+            console.log('Editando produto ID:', id);
+            
+            // Buscar dados do produto via AJAX
+            fetch('api_produtos.php')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro na resposta da API');
+                    }
+                    return response.json();
+                })
+                .then(produtos => {
+                    const produto = produtos.find(p => p.id == id);
+                    if (produto) {
+                        console.log('Produto encontrado:', produto);
+                        
+                        document.getElementById('form-titulo').textContent = '✏️ Editar Produto';
+                        document.getElementById('acao').value = 'editar';
+                        document.getElementById('produto-id').value = produto.id;
+                        document.getElementById('nome').value = produto.nome;
+                        document.getElementById('preco').value = produto.preco;
+                        document.getElementById('categoria').value = produto.categoria;
+                        document.getElementById('descricao').value = produto.descricao;
+                        document.getElementById('imagem').value = produto.imagem;
+                        document.getElementById('destaque').checked = produto.destaque == 1;
+                        
+                        const btnCancelar = document.getElementById('btn-cancelar');
+                        if (btnCancelar) {
+                            btnCancelar.style.display = 'inline-block';
+                        }
+                        
+                        // Scroll para o formulário
+                        const formContainer = document.querySelector('.form-container');
+                        if (formContainer) {
+                            formContainer.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    } else {
+                        console.error('Produto não encontrado');
+                        alert('Erro: Produto não encontrado');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar produto:', error);
+                    alert('Erro ao carregar dados do produto');
+                });
+        };
         
-        document.getElementById('btn-cancelar').addEventListener('click', function() {
-            document.getElementById('produto-form').reset();
-            document.getElementById('form-titulo').textContent = '🆕 Adicionar Novo Produto';
-            document.getElementById('acao').value = 'adicionar';
-            this.style.display = 'none';
-        });
+        const btnCancelar = document.getElementById('btn-cancelar');
+        if (btnCancelar) {
+            btnCancelar.addEventListener('click', function() {
+                document.getElementById('produto-form').reset();
+                document.getElementById('form-titulo').textContent = '🆕 Adicionar Novo Produto';
+                document.getElementById('acao').value = 'adicionar';
+                this.style.display = 'none';
+            });
+        }
     });
     
     document.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', function(e) {
             if (this.href && !this.href.includes('javascript')) {
                 e.preventDefault();
-                document.querySelector('.page-transition').style.opacity = '1';
+                const pageTransition = document.querySelector('.page-transition');
+                if (pageTransition) {
+                    pageTransition.style.opacity = '1';
+                }
                 setTimeout(() => {
                     window.location.href = this.href;
                 }, 500);

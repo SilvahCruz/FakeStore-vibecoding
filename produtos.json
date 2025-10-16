@@ -4,7 +4,7 @@
         "nome": "Camiseta Nebulosa",
         "preco": 79.90,
         "categoria": "camisetas",
-        "descricao": "Camiseta com estampa de nebulosa cósmica",
+        "descricao": "Camiseta premium com estampa de nebulosa cósmica em alta definição",
         "imagem": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400",
         "destaque": true
     },
@@ -13,7 +13,7 @@
         "nome": "Moleton Via Láctea",
         "preco": 149.90,
         "categoria": "moletons",
-        "descricao": "Moleton comfort com estampa da via láctea",
+        "descricao": "Moleton comfort com estampa detalhada da via láctea",
         "imagem": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400",
         "destaque": true
     },
@@ -22,7 +22,7 @@
         "nome": "Boné Astronauta",
         "preco": 49.90,
         "categoria": "acessorios",
-        "descricao": "Boné estilo baseball com logo espacial",
+        "descricao": "Boné estilo baseball com logo espacial exclusivo",
         "imagem": "https://images.unsplash.com/photo-1588850561407-5d44d8cdea49?w=400",
         "destaque": false
     },
@@ -31,8 +31,26 @@
         "nome": "Camiseta Constelações",
         "preco": 69.90,
         "categoria": "camisetas",
-        "descricao": "Camiseta com mapa de constelações",
+        "descricao": "Camiseta com mapa de constelações brilhantes",
         "imagem": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400",
         "destaque": true
+    },
+    {
+        "id": "5",
+        "nome": "Blusa Universo",
+        "preco": 129.90,
+        "categoria": "moletons",
+        "descricao": "Blusa com estampa do sistema solar completo",
+        "imagem": "https://images.unsplash.com/photo-1574180045827-681f8a1a9622?w=400",
+        "destaque": false
+    },
+    {
+        "id": "6",
+        "nome": "Touca Espacial",
+        "preco": 39.90,
+        "categoria": "acessorios",
+        "descricao": "Touca beanie com estampa de planetas",
+        "imagem": "https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=400",
+        "destaque": false
     }
 ]
