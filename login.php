@@ -59,12 +59,12 @@ if (isset($_SESSION['usuario_id'])) {
                 
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" required value="admin@galaxiastore.com">
+                    <input type="email" id="email" name="email" required placeholder="seu@email.com">
                 </div>
 
                 <div class="form-group">
                     <label for="senha">Senha:</label>
-                    <input type="password" id="senha" name="senha" required value="Admin123!">
+                    <input type="password" id="senha" name="senha" required placeholder="Sua senha">
                 </div>
 
                 <button type="submit" class="btn-auth">Entrar no Universo</button>
@@ -72,7 +72,7 @@ if (isset($_SESSION['usuario_id'])) {
 
             <div class="auth-links">
                 <a href="cadastro.php">Criar conta estelar</a>
-                <a href="recuperacao.php">Esqueci minha senha</a>
+                <a href="recuperacao.html">Esqueci minha senha</a>
                 <a href="index.php">Voltar para a loja</a>
             </div>
 

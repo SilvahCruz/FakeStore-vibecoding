@@ -251,6 +251,43 @@ $estatisticas = $stmt_stats->fetch(PDO::FETCH_ASSOC);
     </footer>
 
     <script>
+    // Tornar a função global para o HTML poder chamar
+    window.editarProduto = function(id) {
+        console.log('Editando produto ID:', id);
+        
+        // Buscar dados do produto do array PHP já carregado
+        const produtos = <?= json_encode($produtos) ?>;
+        const produto = produtos.find(p => p.id == id);
+        
+        if (produto) {
+            console.log('Produto encontrado:', produto);
+            
+            document.getElementById('form-titulo').textContent = '✏️ Editar Produto';
+            document.getElementById('acao').value = 'editar';
+            document.getElementById('produto-id').value = produto.id;
+            document.getElementById('nome').value = produto.nome;
+            document.getElementById('preco').value = produto.preco;
+            document.getElementById('categoria').value = produto.categoria;
+            document.getElementById('descricao').value = produto.descricao;
+            document.getElementById('imagem').value = produto.imagem;
+            document.getElementById('destaque').checked = produto.destaque == 1;
+            
+            const btnCancelar = document.getElementById('btn-cancelar');
+            if (btnCancelar) {
+                btnCancelar.style.display = 'inline-block';
+            }
+            
+            // Scroll para o formulário
+            const formContainer = document.querySelector('.form-container');
+            if (formContainer) {
+                formContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else {
+            console.error('Produto não encontrado');
+            alert('Erro: Produto não encontrado');
+        }
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             const pageTransition = document.querySelector('.page-transition');
@@ -259,60 +296,13 @@ $estatisticas = $stmt_stats->fetch(PDO::FETCH_ASSOC);
             }
         }, 500);
         
-        // Tornar a função global para o HTML poder chamar
-        window.editarProduto = function(id) {
-            console.log('Editando produto ID:', id);
-            
-            // Buscar dados do produto via AJAX
-            fetch('api_produtos.php')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro na resposta da API');
-                    }
-                    return response.json();
-                })
-                .then(produtos => {
-                    const produto = produtos.find(p => p.id == id);
-                    if (produto) {
-                        console.log('Produto encontrado:', produto);
-                        
-                        document.getElementById('form-titulo').textContent = '✏️ Editar Produto';
-                        document.getElementById('acao').value = 'editar';
-                        document.getElementById('produto-id').value = produto.id;
-                        document.getElementById('nome').value = produto.nome;
-                        document.getElementById('preco').value = produto.preco;
-                        document.getElementById('categoria').value = produto.categoria;
-                        document.getElementById('descricao').value = produto.descricao;
-                        document.getElementById('imagem').value = produto.imagem;
-                        document.getElementById('destaque').checked = produto.destaque == 1;
-                        
-                        const btnCancelar = document.getElementById('btn-cancelar');
-                        if (btnCancelar) {
-                            btnCancelar.style.display = 'inline-block';
-                        }
-                        
-                        // Scroll para o formulário
-                        const formContainer = document.querySelector('.form-container');
-                        if (formContainer) {
-                            formContainer.scrollIntoView({ behavior: 'smooth' });
-                        }
-                    } else {
-                        console.error('Produto não encontrado');
-                        alert('Erro: Produto não encontrado');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar produto:', error);
-                    alert('Erro ao carregar dados do produto');
-                });
-        };
-        
         const btnCancelar = document.getElementById('btn-cancelar');
         if (btnCancelar) {
             btnCancelar.addEventListener('click', function() {
                 document.getElementById('produto-form').reset();
                 document.getElementById('form-titulo').textContent = '🆕 Adicionar Novo Produto';
                 document.getElementById('acao').value = 'adicionar';
+                document.getElementById('produto-id').value = '';
                 this.style.display = 'none';
             });
         }

@@ -1,50 +1,48 @@
 <?php
 session_start();
-require_once 'conexao.php';
 
-$database = new Database();
-$db = $database->getConnection();
-
-$produto_id = $_GET['id'] ?? 0;
-
-// Buscar produto
-$query = "SELECT * FROM produtos WHERE id = ?";
-$stmt = $db->prepare($query);
-$stmt->execute([$produto_id]);
-$produto = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$produto) {
-    header('Location: produtos.php');
-    exit;
+// Inicializar carrinho se não existir
+if (!isset($_SESSION['carrinho'])) {
+    $_SESSION['carrinho'] = [];
 }
 
-// Processar adição ao carrinho
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])) {
-    if (!isset($_SESSION['usuario_id'])) {
-        header('Location: login.php?redirect=produto&id=' . $produto_id);
-        exit;
-    }
+// Produto específico
+$produto = [
+    'id' => 1,
+    'nome' => 'Moleton Via Láctea',
+    'preco_atual' => 149.90,
+    'preco_original' => 224.85,
+    'desconto' => 33,
+    'avaliacao' => 4.8,
+    'total_avaliacoes' => 851,
+    'descricao' => 'Moleton comfort com estampa detalhada da via láctea',
+    'caracteristicas' => [
+        'Material 100% algodão',
+        'Estampa de alta durabilidade', 
+        'Lavagem segura',
+        'Entrega rápida'
+    ],
+    'cores' => ['Preto', 'Branco', 'Azul Espacial'],
+    'tamanhos' => ['P', 'M', 'G', 'GG']
+];
+
+// Adicionar ao carrinho
+if (isset($_POST['adicionar_carrinho'])) {
+    $cor = $_POST['cor'];
+    $tamanho = $_POST['tamanho'];
+    $quantidade = $_POST['quantidade'];
     
-    $quantidade = $_POST['quantidade'] ?? 1;
+    $item_carrinho = [
+        'produto_id' => $produto['id'],
+        'nome' => $produto['nome'],
+        'preco' => $produto['preco_atual'],
+        'cor' => $cor,
+        'tamanho' => $tamanho,
+        'quantidade' => $quantidade
+    ];
     
-    // Verificar se já está no carrinho
-    $query = "SELECT * FROM carrinho WHERE usuario_id = ? AND produto_id = ?";
-    $stmt = $db->prepare($query);
-    $stmt->execute([$_SESSION['usuario_id'], $produto_id]);
+    $_SESSION['carrinho'][] = $item_carrinho;
     
-    if ($stmt->rowCount() > 0) {
-        // Atualizar quantidade
-        $query = "UPDATE carrinho SET quantidade = quantidade + ? WHERE usuario_id = ? AND produto_id = ?";
-        $stmt = $db->prepare($query);
-        $stmt->execute([$quantidade, $_SESSION['usuario_id'], $produto_id]);
-    } else {
-        // Adicionar novo
-        $query = "INSERT INTO carrinho (usuario_id, produto_id, quantidade) VALUES (?, ?, ?)";
-        $stmt = $db->prepare($query);
-        $stmt->execute([$_SESSION['usuario_id'], $produto_id, $quantidade]);
-    }
-    
-    $_SESSION['sucesso'] = "Produto adicionado ao carrinho!";
     header('Location: carrinho.php');
     exit;
 }
@@ -55,172 +53,727 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($produto['nome']) ?> - Galaxia Store</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="page-transition"></div>
-    
-    <div class="universe-bg">
-        <div class="stars"></div>
-        <div class="comet"></div>
-        <div class="planet planet-1"></div>
-        <div class="planet planet-2"></div>
-        <div class="planet planet-3"></div>
-    </div>
+    <title><?php echo $produto['nome']; ?> - Galaxia Store</title>
+    <style>
+        /* ===== ESTILOS GERAIS ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <header>
-        <nav class="navbar">
-            <div class="nav-container">
-                <a href="index.php" class="logo">
-                    <div class="logo-saturno">
-                        <div class="logo-detalhe logo-detalhe-1"></div>
-                        <div class="logo-detalhe logo-detalhe-2"></div>
-                    </div>
-                    Galaxia Store
-                </a>
-                <ul class="nav-menu">
-                    <li><a href="index.php">Home</a></li>
-                    <li><a href="produtos.php">Produtos</a></li>
-                    <li><a href="carrinho.php">🛒 Carrinho</a></li>
-                    <?php if(isset($_SESSION['usuario_id'])): ?>
-                        <li class="user-info">
-                            <span>👋 <?= htmlspecialchars($_SESSION['usuario_nome']) ?></span>
-                        </li>
-                        <li><a href="logout.php">🚪 Sair</a></li>
-                        <?php if($_SESSION['usuario_nivel'] === 'admin'): ?>
-                            <li><a href="dashboard.php">Dashboard</a></li>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <li><a href="login.php">Login</a></li>
-                        <li><a href="cadastro.php">Cadastro</a></li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </nav>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* ===== HEADER ===== */
+        .navbar {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a78bfa;
+        }
+
+        /* ===== PÁGINA DO PRODUTO ===== */
+        .produto-page {
+            padding: 2rem 0;
+        }
+
+        .produto-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        .produto-galeria {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .produto-imagem {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+
+        .produto-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .produto-titulo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1.2;
+        }
+
+        .produto-avaliacao {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .estrelas {
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+
+        .avaliacao-texto {
+            color: #ccc;
+            font-size: 1rem;
+        }
+
+        .produto-precos {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .preco-atual {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #a78bfa;
+        }
+
+        .preco-original {
+            font-size: 1.5rem;
+            color: #ccc;
+            text-decoration: line-through;
+        }
+
+        .desconto {
+            background: #00d26a;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .oferta-relampago {
+            background: linear-gradient(45deg, #ff6b6b, #ff4757);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .timer {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        .frete-gratis {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid #00d26a;
+        }
+
+        .selecao-grupo {
+            margin-bottom: 1.5rem;
+        }
+
+        .rotulo {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .opcoes-cores {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .opcao-cor {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .opcao-cor:hover {
+            transform: scale(1.1);
+        }
+
+        .opcao-cor.ativa {
+            border-color: #a78bfa;
+        }
+
+        .opcao-cor.ativa::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .cor-preto { background-color: #000000; }
+        .cor-branco { background-color: #ffffff; border: 1px solid #ccc; }
+        .cor-azul { background-color: #1e90ff; }
+
+        .opcoes-tamanhos {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .opcao-tamanho {
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 700;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .opcao-tamanho:hover {
+            border-color: #a78bfa;
+            background: rgba(167, 139, 250, 0.1);
+        }
+
+        .opcao-tamanho.ativa {
+            background: #a78bfa;
+            border-color: #a78bfa;
+            color: white;
+        }
+
+        .seletor-quantidade {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .controles-quantidade {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+
+        .botao-quantidade {
+            width: 45px;
+            height: 45px;
+            border: none;
+            background: #a78bfa;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .botao-quantidade:hover {
+            background: #8b5cf6;
+        }
+
+        .input-quantidade {
+            width: 70px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .botoes-acao {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .botao-adicionar {
+            flex: 2;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .botao-adicionar:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .botao-comprar {
+            flex: 1;
+            background: transparent;
+            color: #a78bfa;
+            border: 2px solid #a78bfa;
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .botao-comprar:hover {
+            background: #a78bfa;
+            color: white;
+        }
+
+        .descricao-produto {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .titulo-descricao {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .texto-descricao {
+            color: #ccc;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .lista-caracteristicas {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .lista-caracteristicas li {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #ccc;
+            font-size: 1.1rem;
+        }
+
+        .lista-caracteristicas li::before {
+            content: '✓';
+            color: #00d26a;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* ===== PRODUTOS RELACIONADOS ===== */
+        .produtos-relacionados {
+            margin-top: 4rem;
+        }
+
+        .titulo-relacionados {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(45deg, #a78bfa, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .produtos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .produto-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .produto-card:hover {
+            transform: translateY(-5px);
+            border-color: #a78bfa;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+        }
+
+        .produto-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .produto-card h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .produto-card .preco {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #a78bfa;
+            margin-bottom: 0.5rem;
+        }
+
+        .produto-card .categoria {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a78bfa;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: rgba(15, 15, 35, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 4rem;
+            padding: 3rem 0 1rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3,
+        .footer-section h4 {
+            margin-bottom: 1rem;
+            color: #a78bfa;
+        }
+
+        .footer-section p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section ul li a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section ul li a:hover {
+            color: #a78bfa;
+            text-decoration: none;
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 2rem auto 0;
+            padding: 1rem 2rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* ===== RESPONSIVIDADE ===== */
+        @media (max-width: 768px) {
+            .produto-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 0 1rem;
+            }
+            
+            .produto-imagem {
+                height: 300px;
+                font-size: 3rem;
+            }
+            
+            .produto-titulo {
+                font-size: 2rem;
+            }
+            
+            .preco-atual {
+                font-size: 2rem;
+            }
+            
+            .botoes-acao {
+                flex-direction: column;
+            }
+            
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="produto-page">
+    <!-- Header -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.php" class="logo">
+                <div class="logo-saturno">
+                    <div class="logo-detalhe logo-detalhe-1"></div>
+                    <div class="logo-detalhe logo-detalhe-2"></div>
+                </div>
+                Galaxia Store
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.php">Home</a></li>
+                <li><a href="produtos.php">Produtos</a></li>
+                <li><a href="carrinho.php">Carrinho</a></li>
+                <li><a href="login.php">Login</a></li>
+            </ul>
+        </div>
     </header>
 
-    <main>
-        <section class="produto-detalhe">
+    <!-- Conteúdo Principal -->
+    <main class="container">
+        <form method="POST" action="produto.php">
             <div class="produto-container">
-                <div class="produto-imagem">
-                    <img src="<?= htmlspecialchars($produto['imagem']) ?>" alt="<?= htmlspecialchars($produto['nome']) ?>">
+                <!-- Galeria de Imagens -->
+                <div class="produto-galeria">
+                    <div class="produto-imagem">
+                        🌌
+                    </div>
                 </div>
-                
+
+                <!-- Informações do Produto -->
                 <div class="produto-info">
-                    <div class="produto-header">
-                        <h1><?= htmlspecialchars($produto['nome']) ?></h1>
-                        <div class="rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">4.8 (851 avaliações)</span>
-                        </div>
-                    </div>
+                    <h1 class="produto-titulo"><?php echo $produto['nome']; ?></h1>
                     
-                    <div class="preco-section">
-                        <div class="preco-atual">R$ <?= number_format($produto['preco'], 2, ',', '.') ?></div>
-                        <div class="preco-original">R$ <?= number_format($produto['preco'] * 1.5, 2, ',', '.') ?></div>
-                        <div class="desconto-badge">-33% OFF</div>
+                    <div class="produto-avaliacao">
+                        <div class="estrelas">★★★★★</div>
+                        <span class="avaliacao-texto"><?php echo $produto['avaliacao']; ?> (<?php echo $produto['total_avaliacoes']; ?> avaliações)</span>
                     </div>
-                    
+
+                    <div class="produto-precos">
+                        <div class="preco-atual">R$ <?php echo number_format($produto['preco_atual'], 2, ',', '.'); ?></div>
+                        <div class="preco-original">R$ <?php echo number_format($produto['preco_original'], 2, ',', '.'); ?></div>
+                        <div class="desconto">-<?php echo $produto['desconto']; ?>% OFF</div>
+                    </div>
+
                     <div class="oferta-relampago">
-                        <span class="relampago-icon">⚡</span>
                         <strong>OFERTA RELÂMPAGO</strong>
-                        <span>Termina em 23:59</span>
+                        <div class="timer">Termina em 23:59:54</div>
                     </div>
-                    
-                    <div class="frete-info">
-                        <span class="frete-icon">🚚</span>
-                        <div>
-                            <strong>Frete grátis</strong>
-                            <span>Para São Paulo, São Paulo</span>
+
+                    <div class="frete-gratis">
+                        <strong>Frete grátis</strong> Para São Paulo, São Paulo
+                    </div>
+
+                    <!-- Seleção de Cor -->
+                    <div class="selecao-grupo">
+                        <label class="rotulo">Cor:</label>
+                        <div class="opcoes-cores">
+                            <input type="radio" name="cor" value="Preto" id="cor-preto" checked hidden>
+                            <label for="cor-preto" class="opcao-cor cor-preto ativa" title="Preto"></label>
+                            
+                            <input type="radio" name="cor" value="Branco" id="cor-branco" hidden>
+                            <label for="cor-branco" class="opcao-cor cor-branco" title="Branco"></label>
+                            
+                            <input type="radio" name="cor" value="Azul Espacial" id="cor-azul" hidden>
+                            <label for="cor-azul" class="opcao-cor cor-azul" title="Azul Espacial"></label>
                         </div>
                     </div>
-                    
-                    <div class="opcoes-produto">
-                        <div class="opcao-grupo">
-                            <label>Cor:</label>
-                            <div class="cores">
-                                <button class="cor-option active" data-cor="roxo">Roxo</button>
-                                <button class="cor-option" data-cor="preto">Preto</button>
-                                <button class="cor-option" data-cor="branco">Branco</button>
-                                <button class="cor-option" data-cor="azul">Azul Espacial</button>
+
+                    <!-- Seleção de Tamanho -->
+                    <div class="selecao-grupo">
+                        <label class="rotulo">Tamanho:</label>
+                        <div class="opcoes-tamanhos">
+                            <?php foreach ($produto['tamanhos'] as $tamanho): ?>
+                                <input type="radio" name="tamanho" value="<?php echo $tamanho; ?>" id="tamanho-<?php echo $tamanho; ?>" <?php echo $tamanho === 'M' ? 'checked' : ''; ?> hidden>
+                                <label for="tamanho-<?php echo $tamanho; ?>" class="opcao-tamanho <?php echo $tamanho === 'M' ? 'ativa' : ''; ?>">
+                                    <?php echo $tamanho; ?>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <!-- Seleção de Quantidade -->
+                    <div class="selecao-grupo">
+                        <label class="rotulo">Quantidade:</label>
+                        <div class="seletor-quantidade">
+                            <div class="controles-quantidade">
+                                <button type="button" class="botao-quantidade" onclick="alterarQuantidade(-1)">-</button>
+                                <input type="number" name="quantidade" class="input-quantidade" value="1" min="1" max="10" readonly>
+                                <button type="button" class="botao-quantidade" onclick="alterarQuantidade(1)">+</button>
                             </div>
                         </div>
-                        
-                        <div class="opcao-grupo">
-                            <label>Tamanho:</label>
-                            <div class="tamanhos">
-                                <button class="tamanho-option" data-tamanho="P">P</button>
-                                <button class="tamanho-option active" data-tamanho="M">M</button>
-                                <button class="tamanho-option" data-tamanho="G">G</button>
-                                <button class="tamanho-option" data-tamanho="GG">GG</button>
-                            </div>
-                        </div>
                     </div>
-                    
-                    <div class="quantidade-section">
-                        <label>Quantidade:</label>
-                        <div class="quantidade-controller">
-                            <button class="qty-btn" id="decrease-qty">-</button>
-                            <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="10">
-                            <button class="qty-btn" id="increase-qty">+</button>
-                        </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="botoes-acao">
+                        <button type="submit" name="adicionar_carrinho" class="botao-adicionar">
+                            Adicionar ao Carrinho
+                        </button>
+                        <button type="button" class="botao-comprar" onclick="comprarAgora()">
+                            Comprar Agora
+                        </button>
                     </div>
-                    
-                    <form method="POST" class="comprar-form">
-                        <input type="hidden" name="adicionar_carrinho" value="1">
-                        <input type="hidden" name="quantidade" id="quantidade-hidden" value="1">
-                        
-                        <div class="action-buttons">
-                            <button type="submit" class="btn-comprar">🛒 Adicionar ao Carrinho</button>
-                            <button type="button" class="btn-comprar-agora">⚡ Comprar Agora</button>
-                        </div>
-                    </form>
-                    
-                    <div class="produto-descricao">
-                        <h3>Descrição do Produto</h3>
-                        <p><?= htmlspecialchars($produto['descricao']) ?></p>
-                        <ul>
-                            <li>✅ Material 100% algodão</li>
-                            <li>✅ Estampa de alta durabilidade</li>
-                            <li>✅ Lavagem segura</li>
-                            <li>✅ Entrega rápida</li>
+
+                    <!-- Descrição do Produto -->
+                    <div class="descricao-produto">
+                        <h3 class="titulo-descricao">Descrição do Produto</h3>
+                        <p class="texto-descricao"><?php echo $produto['descricao']; ?></p>
+                        <ul class="lista-caracteristicas">
+                            <?php foreach ($produto['caracteristicas'] as $caracteristica): ?>
+                                <li><?php echo $caracteristica; ?></li>
+                            <?php endforeach; ?>
                         </ul>
                     </div>
                 </div>
             </div>
-        </section>
-        
-        <section class="produtos-relacionados">
-            <h2>Produtos Relacionados</h2>
+        </form>
+
+        <!-- Produtos Relacionados -->
+        <div class="produtos-relacionados">
+            <h2 class="titulo-relacionados">Produtos Relacionados</h2>
             <div class="produtos-grid">
-                <?php
-                $query_relacionados = "SELECT * FROM produtos WHERE categoria = ? AND id != ? LIMIT 4";
-                $stmt_relacionados = $db->prepare($query_relacionados);
-                $stmt_relacionados->execute([$produto['categoria'], $produto_id]);
-                $relacionados = $stmt_relacionados->fetchAll(PDO::FETCH_ASSOC);
-                
-                foreach($relacionados as $relacionado):
-                ?>
-                <div class="produto-card">
-                    <a href="produto.php?id=<?= $relacionado['id'] ?>">
-                        <img src="<?= htmlspecialchars($relacionado['imagem']) ?>" alt="<?= htmlspecialchars($relacionado['nome']) ?>">
-                        <h4><?= htmlspecialchars($relacionado['nome']) ?></h4>
-                        <p class="preco">R$ <?= number_format($relacionado['preco'], 2, ',', '.') ?></p>
-                        <span class="categoria"><?= ucfirst($relacionado['categoria']) ?></span>
-                    </a>
-                </div>
-                <?php endforeach; ?>
+                <!-- Produto 1 -->
+                <a href="produto.php?id=2" class="produto-card">
+                    <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 1rem;">
+                        🚀
+                    </div>
+                    <h4>Camiseta Astronauta</h4>
+                    <div class="preco">R$ 79,90</div>
+                    <div class="categoria">Camisetas</div>
+                </a>
+                <!-- Produto 2 -->
+                <a href="produto.php?id=3" class="produto-card">
+                    <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 1rem;">
+                        🪐
+                    </div>
+                    <h4>Camiseta Planetária</h4>
+                    <div class="preco">R$ 84,90</div>
+                    <div class="categoria">Camisetas</div>
+                </a>
+                <!-- Produto 3 -->
+                <a href="produto.php?id=4" class="produto-card">
+                    <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 1rem;">
+                        ⭐
+                    </div>
+                    <h4>Camiseta Estelar</h4>
+                    <div class="preco">R$ 89,90</div>
+                    <div class="categoria">Camisetas</div>
+                </a>
             </div>
-        </section>
+        </div>
     </main>
 
+    <!-- Footer -->
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>🌌 Galaxia Store</h3>
-                <p>Vista-se com a elegância do universo. Roupas e acessórios inspirados na beleza cósmica.</p>
+                <h3>Galaxia Store</h3>
+                <p>Vista-se com a elegância do universo. Revele a assinatura estelar trajada no toque cósmico.</p>
             </div>
             <div class="footer-section">
                 <h4>Links Rápidos</h4>
@@ -228,336 +781,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])
                     <li><a href="index.php">Home</a></li>
                     <li><a href="produtos.php">Produtos</a></li>
                     <li><a href="carrinho.php">Carrinho</a></li>
+                    <li><a href="contato.php">Contato</a></li>
                 </ul>
             </div>
             <div class="footer-section">
                 <h4>Contato</h4>
-                <p>📧 contato@galaxiastore.com</p>
-                <p>📱 (11) 99999-9999</p>
+                <p>contato@galaxiatino.com</p>
+                <p>(11) 99999-9999</p>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 Galaxia Store - Todos os direitos reservados</p>
+            <p>&copy; 2024 Galaxia Store. Todos os direitos reservados.</p>
         </div>
     </footer>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(() => {
-            document.querySelector('.page-transition').style.opacity = '0';
-        }, 500);
-        
-        // Quantidade controller
-        const quantidadeInput = document.getElementById('quantidade');
-        const quantidadeHidden = document.getElementById('quantidade-hidden');
-        const decreaseBtn = document.getElementById('decrease-qty');
-        const increaseBtn = document.getElementById('increase-qty');
-        
-        decreaseBtn.addEventListener('click', () => {
-            if (quantidadeInput.value > 1) {
-                quantidadeInput.value = parseInt(quantidadeInput.value) - 1;
-                quantidadeHidden.value = quantidadeInput.value;
-            }
-        });
-        
-        increaseBtn.addEventListener('click', () => {
-            if (quantidadeInput.value < 10) {
-                quantidadeInput.value = parseInt(quantidadeInput.value) + 1;
-                quantidadeHidden.value = quantidadeInput.value;
-            }
-        });
-        
-        // Opções de cor e tamanho
-        document.querySelectorAll('.cor-option, .tamanho-option').forEach(option => {
-            option.addEventListener('click', function() {
-                const parent = this.parentElement;
-                parent.querySelectorAll('.active').forEach(active => active.classList.remove('active'));
-                this.classList.add('active');
+        // Controle de quantidade
+        function alterarQuantidade(alteracao) {
+            const input = document.querySelector('.input-quantidade');
+            let valor = parseInt(input.value);
+            valor += alteracao;
+            
+            if (valor < 1) valor = 1;
+            if (valor > 10) valor = 10;
+            
+            input.value = valor;
+        }
+
+        // Seleção de cores
+        document.querySelectorAll('.opcao-cor').forEach(cor => {
+            cor.addEventListener('click', function() {
+                document.querySelectorAll('.opcao-cor').forEach(c => c.classList.remove('ativa'));
+                this.classList.add('ativa');
+                // Atualiza o radio button correspondente
+                const radioId = this.getAttribute('for');
+                document.getElementById(radioId).checked = true;
             });
         });
-        
+
+        // Seleção de tamanhos
+        document.querySelectorAll('.opcao-tamanho').forEach(tamanho => {
+            tamanho.addEventListener('click', function() {
+                document.querySelectorAll('.opcao-tamanho').forEach(t => t.classList.remove('ativa'));
+                this.classList.add('ativa');
+                // Atualiza o radio button correspondente
+                const radioId = this.getAttribute('for');
+                document.getElementById(radioId).checked = true;
+            });
+        });
+
         // Comprar agora
-        document.querySelector('.btn-comprar-agora').addEventListener('click', function() {
-            document.querySelector('.comprar-form').submit();
-        });
-    });
-    
-    document.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.href && !this.href.includes('javascript')) {
-                e.preventDefault();
-                document.querySelector('.page-transition').style.opacity = '1';
-                setTimeout(() => {
-                    window.location.href = this.href;
-                }, 500);
-            }
-        });
-    });
+        function comprarAgora() {
+            const form = document.querySelector('form');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'comprar_agora';
+            input.value = '1';
+            form.appendChild(input);
+            form.submit();
+        }
     </script>
-
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Transição de página
-    setTimeout(() => {
-        document.querySelector('.page-transition').style.opacity = '0';
-    }, 500);
-    
-    // ===== CRONÔMETRO FUNCIONAL =====
-    function iniciarCronometro() {
-        const tempoRestante = document.querySelector('.oferta-relampago span:last-child');
-        let tempoTotal = 24 * 60 * 60; // 24 horas em segundos
-        
-        function atualizarCronometro() {
-            const horas = Math.floor(tempoTotal / 3600);
-            const minutos = Math.floor((tempoTotal % 3600) / 60);
-            const segundos = tempoTotal % 60;
-            
-            tempoRestante.textContent = `Termina em ${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
-            
-            if (tempoTotal > 0) {
-                tempoTotal--;
-                setTimeout(atualizarCronometro, 1000);
-            } else {
-                tempoRestante.textContent = "Oferta expirada!";
-                tempoRestante.style.color = "#ef4444";
-            }
-        }
-        
-        atualizarCronometro();
-    }
-    
-    iniciarCronometro();
-    
-    // ===== CONTROLE DE QUANTIDADE =====
-    const quantidadeInput = document.getElementById('quantidade');
-    const quantidadeHidden = document.getElementById('quantidade-hidden');
-    const decreaseBtn = document.getElementById('decrease-qty');
-    const increaseBtn = document.getElementById('increase-qty');
-    
-    decreaseBtn.addEventListener('click', () => {
-        if (quantidadeInput.value > 1) {
-            quantidadeInput.value = parseInt(quantidadeInput.value) - 1;
-            quantidadeHidden.value = quantidadeInput.value;
-        }
-    });
-    
-    increaseBtn.addEventListener('click', () => {
-        if (quantidadeInput.value < 10) {
-            quantidadeInput.value = parseInt(quantidadeInput.value) + 1;
-            quantidadeHidden.value = quantidadeInput.value;
-        }
-    });
-    
-    quantidadeInput.addEventListener('change', () => {
-        let valor = parseInt(quantidadeInput.value);
-        if (valor < 1) valor = 1;
-        if (valor > 10) valor = 10;
-        quantidadeInput.value = valor;
-        quantidadeHidden.value = valor;
-    });
-    
-    // ===== SELEÇÃO DE COR =====
-    const corOptions = document.querySelectorAll('.cor-option');
-    let corSelecionada = 'roxo';
-    
-    corOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            corOptions.forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
-            corSelecionada = this.getAttribute('data-cor');
-            console.log('Cor selecionada:', corSelecionada);
-        });
-    });
-    
-    // ===== SELEÇÃO DE TAMANHO =====
-    const tamanhoOptions = document.querySelectorAll('.tamanho-option');
-    let tamanhoSelecionado = 'M';
-    
-    tamanhoOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            tamanhoOptions.forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
-            tamanhoSelecionado = this.getAttribute('data-tamanho');
-            console.log('Tamanho selecionado:', tamanhoSelecionado);
-        });
-    });
-    
-    // ===== ADICIONAR AO CARRINHO =====
-    const formCarrinho = document.querySelector('.comprar-form');
-    
-    formCarrinho.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const produtoId = <?= $produto_id ?>;
-        const quantidade = quantidadeHidden.value;
-        
-        // Dados do produto
-        const produtoData = {
-            id: produtoId,
-            nome: '<?= $produto['nome'] ?>',
-            preco: <?= $produto['preco'] ?>,
-            imagem: '<?= $produto['imagem'] ?>',
-            quantidade: quantidade,
-            cor: corSelecionada,
-            tamanho: tamanhoSelecionado
-        };
-        
-        adicionarAoCarrinho(produtoData);
-    });
-    
-    // ===== FUNÇÃO ADICIONAR AO CARRINHO =====
-    function adicionarAoCarrinho(produto) {
-        // Recupera carrinho atual do localStorage
-        let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
-        
-        // Verifica se o produto já está no carrinho
-        const produtoExistente = carrinho.find(item => 
-            item.id === produto.id && 
-            item.cor === produto.cor && 
-            item.tamanho === produto.tamanho
-        );
-        
-        if (produtoExistente) {
-            // Atualiza quantidade se já existir
-            produtoExistente.quantidade = parseInt(produtoExistente.quantidade) + parseInt(produto.quantidade);
-        } else {
-            // Adiciona novo produto
-            carrinho.push(produto);
-        }
-        
-        // Salva no localStorage
-        localStorage.setItem('carrinho', JSON.stringify(carrinho));
-        
-        // Feedback visual
-        mostrarFeedbackSucesso('Produto adicionado ao carrinho!');
-        
-        // Atualiza contador do carrinho (se existir)
-        atualizarContadorCarrinho();
-        
-        console.log('Carrinho atual:', carrinho);
-    }
-    
-    // ===== COMPRAR AGORA =====
-    const btnComprarAgora = document.querySelector('.btn-comprar-agora');
-    
-    btnComprarAgora.addEventListener('click', function() {
-        const produtoId = <?= $produto_id ?>;
-        const quantidade = quantidadeHidden.value;
-        
-        const produtoData = {
-            id: produtoId,
-            nome: '<?= $produto['nome'] ?>',
-            preco: <?= $produto['preco'] ?>,
-            imagem: '<?= $produto['imagem'] ?>',
-            quantidade: quantidade,
-            cor: corSelecionada,
-            tamanho: tamanhoSelecionado
-        };
-        
-        adicionarAoCarrinho(produtoData);
-        
-        // Redireciona para o carrinho após 1 segundo
-        setTimeout(() => {
-            window.location.href = 'carrinho.php';
-        }, 1000);
-    });
-    
-    // ===== FUNÇÕES AUXILIARES =====
-    function mostrarFeedbackSucesso(mensagem) {
-        // Cria elemento de feedback
-        const feedback = document.createElement('div');
-        feedback.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 1000;
-            font-weight: 600;
-            animation: slideIn 0.3s ease;
-        `;
-        feedback.textContent = mensagem;
-        
-        document.body.appendChild(feedback);
-        
-        // Remove após 3 segundos
-        setTimeout(() => {
-            feedback.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => {
-                document.body.removeChild(feedback);
-            }, 300);
-        }, 3000);
-    }
-    
-    function atualizarContadorCarrinho() {
-        const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
-        const totalItens = carrinho.reduce((total, item) => total + parseInt(item.quantidade), 0);
-        
-        // Atualiza no menu de navegação
-        const navCarrinho = document.querySelector('a[href="carrinho.php"]');
-        if (navCarrinho && totalItens > 0) {
-            navCarrinho.innerHTML = `🛒 Carrinho (${totalItens})`;
-        }
-    }
-    
-    // ===== ANIMAÇÕES CSS =====
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // Inicializa contador do carrinho
-    atualizarContadorCarrinho();
-    
-    // ===== NAVEGAÇÃO COM TRANSITION =====
-    document.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.href && !this.href.includes('javascript') && this.target !== '_blank') {
-                e.preventDefault();
-                document.querySelector('.page-transition').style.opacity = '1';
-                setTimeout(() => {
-                    window.location.href = this.href;
-                }, 500);
-            }
-        });
-    });
-});
-</script>
-
-<script>
-console.log('=== TESTE JAVASCRIPT ===');
-console.log('Script está carregando!');
-
-// Teste mais básico possível
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM totalmente carregado!');
-    
-    // Teste de clique simples
-    const testButton = document.querySelector('.btn-comprar');
-    if (testButton) {
-        console.log('Botão encontrado:', testButton);
-        testButton.addEventListener('click', function() {
-            console.log('🎉 BOTÃO CLICADO! Funciona!');
-            alert('JavaScript está funcionando!');
-        });
-    } else {
-        console.log('❌ Botão não encontrado');
-    }
-});
-
-// Teste imediato
-console.log('Script executado imediatamente');
-</script>
 </body>
 </html>
