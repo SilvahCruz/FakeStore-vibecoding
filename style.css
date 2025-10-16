@@ -2043,6 +2043,67 @@ footer p {
     color: #cbd5e0;
 }
 
+/* CORREÇÕES PARA REMOVER SUBLINHADO AZUL E DEIXAR VALORES EM BRANCO */
+
+/* Remover sublinhado e cor azul dos links dos produtos */
+.produto-card a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+/* Garantir que todos os textos dentro do card fiquem brancos */
+.produto-card a h4,
+.produto-card a .preco,
+.produto-card a .descricao,
+.produto-card a .categoria,
+.produto-card a .destaque-badge {
+    color: white;
+}
+
+/* Manter a cor roxa apenas para o preço */
+.produto-card a .preco {
+    color: #a78bfa !important;
+}
+
+/* Links de filtro também precisam de ajuste */
+.filtro-btn {
+    text-decoration: none;
+    color: white;
+}
+
+/* Links do footer */
+.footer-section a {
+    text-decoration: none;
+    color: #cbd5e0;
+}
+
+.footer-section a:hover {
+    color: #a78bfa;
+}
+
+/* Links do menu de navegação */
+.nav-menu a {
+    text-decoration: none;
+    color: white;
+}
+
+/* Links de autenticação */
+.auth-links a {
+    text-decoration: none;
+}
+
+/* Garantir que todos os links da página tenham a cor branca por padrão */
+a {
+    color: white;
+    text-decoration: none;
+}
+
+/* Manter o hover effect nos links */
+a:hover {
+    color: #a78bfa;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .checkout-container {

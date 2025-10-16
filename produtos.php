@@ -5,19 +5,29 @@ require_once 'conexao.php';
 $database = new Database();
 $db = $database->getConnection();
 
-// Buscar todos os produtos
-$query = "SELECT * FROM produtos ORDER BY data_criacao DESC";
-$stmt = $db->prepare($query);
-$stmt->execute();
-$produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Inicializar array de produtos vazio
+$produtos = [];
 
-// Filtrar por categoria se especificado
-$categoria_filtro = $_GET['categoria'] ?? 'todos';
-if ($categoria_filtro !== 'todos') {
-    $query = "SELECT * FROM produtos WHERE categoria = ? ORDER BY data_criacao DESC";
-    $stmt = $db->prepare($query);
-    $stmt->execute([$categoria_filtro]);
-    $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Buscar todos os produtos apenas se a conexão estiver disponível
+if ($db !== null) {
+    try {
+        $query = "SELECT * FROM produtos ORDER BY data_criacao DESC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Filtrar por categoria se especificado
+        $categoria_filtro = $_GET['categoria'] ?? 'todos';
+        if ($categoria_filtro !== 'todos') {
+            $query = "SELECT * FROM produtos WHERE categoria = ? ORDER BY data_criacao DESC";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$categoria_filtro]);
+            $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+    } catch (Exception $e) {
+        // Em caso de erro na query, manter array vazio
+        $produtos = [];
+    }
 }
 ?>
 
@@ -82,7 +92,15 @@ if ($categoria_filtro !== 'todos') {
                 <a href="produtos.php?categoria=acessorios" class="filtro-btn <?= $categoria_filtro === 'acessorios' ? 'active' : '' ?>">Acessórios</a>
             </div>
             <div class="produtos-grid">
-                <?php if(count($produtos) > 0): ?>
+                <?php if($db === null): ?>
+                    <!-- Mensagem quando o banco de dados não está disponível -->
+                    <div class="empty-state">
+                        <div class="empty-icon">🚀</div>
+                        <h4>Banco de Dados Indisponível</h4>
+                        <p>O serviço de banco de dados está temporariamente indisponível. Por favor, verifique se o MySQL está rodando e tente novamente.</p>
+                        <a href="produtos.php" class="cta-button">Tentar Novamente</a>
+                    </div>
+                <?php elseif(count($produtos) > 0): ?>
                     <?php foreach($produtos as $produto): ?>
                     <div class="produto-card">
                         <a href="produto.php?id=<?= $produto['id'] ?>">
