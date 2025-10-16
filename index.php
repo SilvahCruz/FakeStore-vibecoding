@@ -56,7 +56,6 @@ $produtos_destaque = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php endif; ?>
                     <?php else: ?>
                         <li><a href="login.php">Login</a></li>
-                        <li><a href="cadastro.php">Cadastro</a></li>
                     <?php endif; ?>
                 </ul>
             </div>

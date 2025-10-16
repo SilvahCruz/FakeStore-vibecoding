@@ -21,47 +21,32 @@ if (!$produto) {
 // Processar adição ao carrinho
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])) {
     if (!isset($_SESSION['usuario_id'])) {
-        $redirect_url = 'produto.php?id=' . $produto_id;
-        header('Location: login.php?redirect=' . urlencode($redirect_url));
+        header('Location: login.php?redirect=produto&id=' . $produto_id);
         exit;
     }
     
     $quantidade = $_POST['quantidade'] ?? 1;
-    $cor = $_POST['cor'] ?? 'roxo';
-    $tamanho = $_POST['tamanho'] ?? 'M';
     
     // Verificar se já está no carrinho
-    $query = "SELECT * FROM carrinho WHERE usuario_id = ? AND produto_id = ? AND cor = ? AND tamanho = ?";
+    $query = "SELECT * FROM carrinho WHERE usuario_id = ? AND produto_id = ?";
     $stmt = $db->prepare($query);
-    $stmt->execute([$_SESSION['usuario_id'], $produto_id, $cor, $tamanho]);
+    $stmt->execute([$_SESSION['usuario_id'], $produto_id]);
     
     if ($stmt->rowCount() > 0) {
         // Atualizar quantidade
-        $query = "UPDATE carrinho SET quantidade = quantidade + ? WHERE usuario_id = ? AND produto_id = ? AND cor = ? AND tamanho = ?";
+        $query = "UPDATE carrinho SET quantidade = quantidade + ? WHERE usuario_id = ? AND produto_id = ?";
         $stmt = $db->prepare($query);
-        $stmt->execute([$quantidade, $_SESSION['usuario_id'], $produto_id, $cor, $tamanho]);
+        $stmt->execute([$quantidade, $_SESSION['usuario_id'], $produto_id]);
     } else {
         // Adicionar novo
-        $query = "INSERT INTO carrinho (usuario_id, produto_id, quantidade, cor, tamanho) VALUES (?, ?, ?, ?, ?)";
+        $query = "INSERT INTO carrinho (usuario_id, produto_id, quantidade) VALUES (?, ?, ?)";
         $stmt = $db->prepare($query);
-        $stmt->execute([$_SESSION['usuario_id'], $produto_id, $quantidade, $cor, $tamanho]);
+        $stmt->execute([$_SESSION['usuario_id'], $produto_id, $quantidade]);
     }
     
-    // Se for compra imediata, redirecionar para checkout
-    if (isset($_POST['compra_imediata']) && $_POST['compra_imediata'] === '1') {
-        $_SESSION['checkout_produtos'] = [[
-            'produto_id' => $produto_id,
-            'quantidade' => $quantidade,
-            'cor' => $cor,
-            'tamanho' => $tamanho
-        ]];
-        header('Location: checkout.php');
-        exit;
-    } else {
-        $_SESSION['sucesso'] = "Produto adicionado ao carrinho!";
-        header('Location: carrinho.php');
-        exit;
-    }
+    $_SESSION['sucesso'] = "Produto adicionado ao carrinho!";
+    header('Location: carrinho.php');
+    exit;
 }
 ?>
 
@@ -141,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])
                     <div class="oferta-relampago">
                         <span class="relampago-icon">⚡</span>
                         <strong>OFERTA RELÂMPAGO</strong>
-                        <span id="contador-tempo">23:59:59</span>
+                        <span>Termina em 23:59</span>
                     </div>
                     
                     <div class="frete-info">
@@ -156,20 +141,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])
                         <div class="opcao-grupo">
                             <label>Cor:</label>
                             <div class="cores">
-                                <button type="button" class="cor-option active" data-cor="roxo" style="background: #6b46c1;">Roxo</button>
-                                <button type="button" class="cor-option" data-cor="preto" style="background: #2d3748;">Preto</button>
-                                <button type="button" class="cor-option" data-cor="branco" style="background: #fff; color: #000;">Branco</button>
-                                <button type="button" class="cor-option" data-cor="azul" style="background: #3182ce;">Azul Espacial</button>
+                                <button class="cor-option active" data-cor="roxo">Roxo</button>
+                                <button class="cor-option" data-cor="preto">Preto</button>
+                                <button class="cor-option" data-cor="branco">Branco</button>
+                                <button class="cor-option" data-cor="azul">Azul Espacial</button>
                             </div>
                         </div>
                         
                         <div class="opcao-grupo">
                             <label>Tamanho:</label>
                             <div class="tamanhos">
-                                <button type="button" class="tamanho-option" data-tamanho="P">P</button>
-                                <button type="button" class="tamanho-option active" data-tamanho="M">M</button>
-                                <button type="button" class="tamanho-option" data-tamanho="G">G</button>
-                                <button type="button" class="tamanho-option" data-tamanho="GG">GG</button>
+                                <button class="tamanho-option" data-tamanho="P">P</button>
+                                <button class="tamanho-option active" data-tamanho="M">M</button>
+                                <button class="tamanho-option" data-tamanho="G">G</button>
+                                <button class="tamanho-option" data-tamanho="GG">GG</button>
                             </div>
                         </div>
                     </div>
@@ -177,18 +162,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])
                     <div class="quantidade-section">
                         <label>Quantidade:</label>
                         <div class="quantidade-controller">
-                            <button type="button" class="qty-btn" id="decrease-qty">-</button>
+                            <button class="qty-btn" id="decrease-qty">-</button>
                             <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="10">
-                            <button type="button" class="qty-btn" id="increase-qty">+</button>
+                            <button class="qty-btn" id="increase-qty">+</button>
                         </div>
                     </div>
                     
                     <form method="POST" class="comprar-form">
                         <input type="hidden" name="adicionar_carrinho" value="1">
                         <input type="hidden" name="quantidade" id="quantidade-hidden" value="1">
-                        <input type="hidden" name="cor" id="cor-hidden" value="roxo">
-                        <input type="hidden" name="tamanho" id="tamanho-hidden" value="M">
-                        <input type="hidden" name="compra_imediata" id="compra-imediata" value="0">
                         
                         <div class="action-buttons">
                             <button type="submit" class="btn-comprar">🛒 Adicionar ao Carrinho</button>
@@ -265,32 +247,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])
             document.querySelector('.page-transition').style.opacity = '0';
         }, 500);
         
-        // Contador regressivo
-        function iniciarContador() {
-            const contador = document.getElementById('contador-tempo');
-            let tempo = 23 * 60 * 60 + 59 * 60 + 59; // 23:59:59 em segundos
-            
-            function atualizarContador() {
-                const horas = Math.floor(tempo / 3600);
-                const minutos = Math.floor((tempo % 3600) / 60);
-                const segundos = tempo % 60;
-                
-                contador.textContent = 
-                    `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
-                
-                if (tempo > 0) {
-                    tempo--;
-                    setTimeout(atualizarContador, 1000);
-                } else {
-                    contador.textContent = 'Oferta encerrada!';
-                }
-            }
-            
-            atualizarContador();
-        }
-        
-        iniciarContador();
-        
         // Quantidade controller
         const quantidadeInput = document.getElementById('quantidade');
         const quantidadeHidden = document.getElementById('quantidade-hidden');
@@ -312,33 +268,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])
         });
         
         // Opções de cor e tamanho
-        document.querySelectorAll('.cor-option').forEach(option => {
+        document.querySelectorAll('.cor-option, .tamanho-option').forEach(option => {
             option.addEventListener('click', function() {
-                document.querySelectorAll('.cor-option').forEach(opt => opt.classList.remove('active'));
+                const parent = this.parentElement;
+                parent.querySelectorAll('.active').forEach(active => active.classList.remove('active'));
                 this.classList.add('active');
-                document.getElementById('cor-hidden').value = this.getAttribute('data-cor');
-            });
-        });
-        
-        document.querySelectorAll('.tamanho-option').forEach(option => {
-            option.addEventListener('click', function() {
-                document.querySelectorAll('.tamanho-option').forEach(opt => opt.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById('tamanho-hidden').value = this.getAttribute('data-tamanho');
             });
         });
         
         // Comprar agora
         document.querySelector('.btn-comprar-agora').addEventListener('click', function() {
-            document.getElementById('compra-imediata').value = '1';
             document.querySelector('.comprar-form').submit();
-        });
-        
-        // Adicionar ao carrinho (sem compra imediata)
-        document.querySelector('.comprar-form').addEventListener('submit', function(e) {
-            if (document.getElementById('compra-imediata').value === '0') {
-                // Não faz nada extra - submit normal
-            }
         });
     });
     
@@ -354,5 +294,270 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar_carrinho'])
         });
     });
     </script>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Transição de página
+    setTimeout(() => {
+        document.querySelector('.page-transition').style.opacity = '0';
+    }, 500);
+    
+    // ===== CRONÔMETRO FUNCIONAL =====
+    function iniciarCronometro() {
+        const tempoRestante = document.querySelector('.oferta-relampago span:last-child');
+        let tempoTotal = 24 * 60 * 60; // 24 horas em segundos
+        
+        function atualizarCronometro() {
+            const horas = Math.floor(tempoTotal / 3600);
+            const minutos = Math.floor((tempoTotal % 3600) / 60);
+            const segundos = tempoTotal % 60;
+            
+            tempoRestante.textContent = `Termina em ${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+            
+            if (tempoTotal > 0) {
+                tempoTotal--;
+                setTimeout(atualizarCronometro, 1000);
+            } else {
+                tempoRestante.textContent = "Oferta expirada!";
+                tempoRestante.style.color = "#ef4444";
+            }
+        }
+        
+        atualizarCronometro();
+    }
+    
+    iniciarCronometro();
+    
+    // ===== CONTROLE DE QUANTIDADE =====
+    const quantidadeInput = document.getElementById('quantidade');
+    const quantidadeHidden = document.getElementById('quantidade-hidden');
+    const decreaseBtn = document.getElementById('decrease-qty');
+    const increaseBtn = document.getElementById('increase-qty');
+    
+    decreaseBtn.addEventListener('click', () => {
+        if (quantidadeInput.value > 1) {
+            quantidadeInput.value = parseInt(quantidadeInput.value) - 1;
+            quantidadeHidden.value = quantidadeInput.value;
+        }
+    });
+    
+    increaseBtn.addEventListener('click', () => {
+        if (quantidadeInput.value < 10) {
+            quantidadeInput.value = parseInt(quantidadeInput.value) + 1;
+            quantidadeHidden.value = quantidadeInput.value;
+        }
+    });
+    
+    quantidadeInput.addEventListener('change', () => {
+        let valor = parseInt(quantidadeInput.value);
+        if (valor < 1) valor = 1;
+        if (valor > 10) valor = 10;
+        quantidadeInput.value = valor;
+        quantidadeHidden.value = valor;
+    });
+    
+    // ===== SELEÇÃO DE COR =====
+    const corOptions = document.querySelectorAll('.cor-option');
+    let corSelecionada = 'roxo';
+    
+    corOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            corOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+            corSelecionada = this.getAttribute('data-cor');
+            console.log('Cor selecionada:', corSelecionada);
+        });
+    });
+    
+    // ===== SELEÇÃO DE TAMANHO =====
+    const tamanhoOptions = document.querySelectorAll('.tamanho-option');
+    let tamanhoSelecionado = 'M';
+    
+    tamanhoOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            tamanhoOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+            tamanhoSelecionado = this.getAttribute('data-tamanho');
+            console.log('Tamanho selecionado:', tamanhoSelecionado);
+        });
+    });
+    
+    // ===== ADICIONAR AO CARRINHO =====
+    const formCarrinho = document.querySelector('.comprar-form');
+    
+    formCarrinho.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const produtoId = <?= $produto_id ?>;
+        const quantidade = quantidadeHidden.value;
+        
+        // Dados do produto
+        const produtoData = {
+            id: produtoId,
+            nome: '<?= $produto['nome'] ?>',
+            preco: <?= $produto['preco'] ?>,
+            imagem: '<?= $produto['imagem'] ?>',
+            quantidade: quantidade,
+            cor: corSelecionada,
+            tamanho: tamanhoSelecionado
+        };
+        
+        adicionarAoCarrinho(produtoData);
+    });
+    
+    // ===== FUNÇÃO ADICIONAR AO CARRINHO =====
+    function adicionarAoCarrinho(produto) {
+        // Recupera carrinho atual do localStorage
+        let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+        
+        // Verifica se o produto já está no carrinho
+        const produtoExistente = carrinho.find(item => 
+            item.id === produto.id && 
+            item.cor === produto.cor && 
+            item.tamanho === produto.tamanho
+        );
+        
+        if (produtoExistente) {
+            // Atualiza quantidade se já existir
+            produtoExistente.quantidade = parseInt(produtoExistente.quantidade) + parseInt(produto.quantidade);
+        } else {
+            // Adiciona novo produto
+            carrinho.push(produto);
+        }
+        
+        // Salva no localStorage
+        localStorage.setItem('carrinho', JSON.stringify(carrinho));
+        
+        // Feedback visual
+        mostrarFeedbackSucesso('Produto adicionado ao carrinho!');
+        
+        // Atualiza contador do carrinho (se existir)
+        atualizarContadorCarrinho();
+        
+        console.log('Carrinho atual:', carrinho);
+    }
+    
+    // ===== COMPRAR AGORA =====
+    const btnComprarAgora = document.querySelector('.btn-comprar-agora');
+    
+    btnComprarAgora.addEventListener('click', function() {
+        const produtoId = <?= $produto_id ?>;
+        const quantidade = quantidadeHidden.value;
+        
+        const produtoData = {
+            id: produtoId,
+            nome: '<?= $produto['nome'] ?>',
+            preco: <?= $produto['preco'] ?>,
+            imagem: '<?= $produto['imagem'] ?>',
+            quantidade: quantidade,
+            cor: corSelecionada,
+            tamanho: tamanhoSelecionado
+        };
+        
+        adicionarAoCarrinho(produtoData);
+        
+        // Redireciona para o carrinho após 1 segundo
+        setTimeout(() => {
+            window.location.href = 'carrinho.php';
+        }, 1000);
+    });
+    
+    // ===== FUNÇÕES AUXILIARES =====
+    function mostrarFeedbackSucesso(mensagem) {
+        // Cria elemento de feedback
+        const feedback = document.createElement('div');
+        feedback.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+        `;
+        feedback.textContent = mensagem;
+        
+        document.body.appendChild(feedback);
+        
+        // Remove após 3 segundos
+        setTimeout(() => {
+            feedback.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                document.body.removeChild(feedback);
+            }, 300);
+        }, 3000);
+    }
+    
+    function atualizarContadorCarrinho() {
+        const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+        const totalItens = carrinho.reduce((total, item) => total + parseInt(item.quantidade), 0);
+        
+        // Atualiza no menu de navegação
+        const navCarrinho = document.querySelector('a[href="carrinho.php"]');
+        if (navCarrinho && totalItens > 0) {
+            navCarrinho.innerHTML = `🛒 Carrinho (${totalItens})`;
+        }
+    }
+    
+    // ===== ANIMAÇÕES CSS =====
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Inicializa contador do carrinho
+    atualizarContadorCarrinho();
+    
+    // ===== NAVEGAÇÃO COM TRANSITION =====
+    document.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.href && !this.href.includes('javascript') && this.target !== '_blank') {
+                e.preventDefault();
+                document.querySelector('.page-transition').style.opacity = '1';
+                setTimeout(() => {
+                    window.location.href = this.href;
+                }, 500);
+            }
+        });
+    });
+});
+</script>
+
+<script>
+console.log('=== TESTE JAVASCRIPT ===');
+console.log('Script está carregando!');
+
+// Teste mais básico possível
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM totalmente carregado!');
+    
+    // Teste de clique simples
+    const testButton = document.querySelector('.btn-comprar');
+    if (testButton) {
+        console.log('Botão encontrado:', testButton);
+        testButton.addEventListener('click', function() {
+            console.log('🎉 BOTÃO CLICADO! Funciona!');
+            alert('JavaScript está funcionando!');
+        });
+    } else {
+        console.log('❌ Botão não encontrado');
+    }
+});
+
+// Teste imediato
+console.log('Script executado imediatamente');
+</script>
 </body>
 </html>

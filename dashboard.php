@@ -58,71 +58,10 @@ $stmt->execute();
 $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Buscar estatísticas
-$query_stats = "SELECT 
-    COUNT(*) as total_produtos, 
-    SUM(preco) as valor_total, 
-    AVG(preco) as preco_medio, 
-    COUNT(CASE WHEN destaque = 1 THEN 1 END) as produtos_destaque 
-    FROM produtos";
+$query_stats = "SELECT COUNT(*) as total_produtos, SUM(preco) as valor_total, AVG(preco) as preco_medio, COUNT(CASE WHEN destaque = 1 THEN 1 END) as produtos_destaque FROM produtos";
 $stmt_stats = $db->prepare($query_stats);
 $stmt_stats->execute();
 $estatisticas = $stmt_stats->fetch(PDO::FETCH_ASSOC);
-
-// Buscar dados para gráficos
-$query_vendas = "SELECT 
-    DATE(data_pedido) as data,
-    COUNT(*) as total_pedidos,
-    SUM(total) as total_vendas
-    FROM pedidos 
-    WHERE data_pedido >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-    GROUP BY DATE(data_pedido)
-    ORDER BY data DESC
-    LIMIT 30";
-$stmt_vendas = $db->prepare($query_vendas);
-$stmt_vendas->execute();
-$vendas_diarias = $stmt_vendas->fetchAll(PDO::FETCH_ASSOC);
-
-// Produtos mais vendidos
-$query_produtos_vendidos = "SELECT 
-    p.nome,
-    SUM(pi.quantidade) as total_vendido,
-    SUM(pi.quantidade * pi.preco_unitario) as receita_total
-    FROM pedido_itens pi
-    JOIN produtos p ON pi.produto_id = p.id
-    JOIN pedidos ped ON pi.pedido_id = ped.id
-    WHERE ped.data_pedido >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-    GROUP BY p.id, p.nome
-    ORDER BY total_vendido DESC
-    LIMIT 10";
-$stmt_produtos = $db->prepare($query_produtos_vendidos);
-$stmt_produtos->execute();
-$produtos_vendidos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
-
-// Vendas por categoria
-$query_categorias = "SELECT 
-    p.categoria,
-    COUNT(pi.id) as total_itens,
-    SUM(pi.quantidade * pi.preco_unitario) as receita
-    FROM pedido_itens pi
-    JOIN produtos p ON pi.produto_id = p.id
-    JOIN pedidos ped ON pi.pedido_id = ped.id
-    WHERE ped.data_pedido >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-    GROUP BY p.categoria
-    ORDER BY receita DESC";
-$stmt_categorias = $db->prepare($query_categorias);
-$stmt_categorias->execute();
-$vendas_categorias = $stmt_categorias->fetchAll(PDO::FETCH_ASSOC);
-
-// Total de pedidos e vendas
-$query_totais = "SELECT 
-    COUNT(*) as total_pedidos,
-    SUM(total) as total_vendas,
-    AVG(total) as ticket_medio
-    FROM pedidos
-    WHERE data_pedido >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
-$stmt_totais = $db->prepare($query_totais);
-$stmt_totais->execute();
-$totais_vendas = $stmt_totais->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -132,7 +71,6 @@ $totais_vendas = $stmt_totais->fetch(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin - Galaxia Store</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -176,80 +114,33 @@ $totais_vendas = $stmt_totais->fetch(PDO::FETCH_ASSOC);
                 <p>Gerencie seus produtos e estoque cósmico</p>
             </div>
 
-            <!-- Estatísticas de Vendas -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">💰</div>
-                    <div class="stat-info">
-                        <h3>R$ <?= number_format($totais_vendas['total_vendas'] ?? 0, 2, ',', '.') ?></h3>
-                        <p>Vendas (30 dias)</p>
-                    </div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-icon">📦</div>
-                    <div class="stat-info">
-                        <h3><?= $totais_vendas['total_pedidos'] ?? 0 ?></h3>
-                        <p>Pedidos (30 dias)</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🎫</div>
-                    <div class="stat-info">
-                        <h3>R$ <?= number_format($totais_vendas['ticket_medio'] ?? 0, 2, ',', '.') ?></h3>
-                        <p>Ticket Médio</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📊</div>
                     <div class="stat-info">
                         <h3><?= $estatisticas['total_produtos'] ?? 0 ?></h3>
                         <p>Total de Produtos</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Gráficos -->
-            <div class="graficos-grid">
-                <div class="grafico-card">
-                    <h3>📈 Vendas Diárias (Últimos 30 dias)</h3>
-                    <canvas id="vendasChart" width="400" height="200"></canvas>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <h3>R$ <?= number_format($estatisticas['valor_total'] ?? 0, 2, ',', '.') ?></h3>
+                        <p>Valor em Estoque</p>
+                    </div>
                 </div>
-                
-                <div class="grafico-card">
-                    <h3>🏆 Produtos Mais Vendidos</h3>
-                    <canvas id="produtosChart" width="400" height="200"></canvas>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-info">
+                        <h3><?= $estatisticas['produtos_destaque'] ?? 0 ?></h3>
+                        <p>Produtos em Destaque</p>
+                    </div>
                 </div>
-                
-                <div class="grafico-card">
-                    <h3>📁 Vendas por Categoria</h3>
-                    <canvas id="categoriasChart" width="400" height="200"></canvas>
-                </div>
-                
-                <div class="grafico-card">
-                    <h3>📋 Últimos Pedidos</h3>
-                    <div class="pedidos-lista">
-                        <?php
-                        $query_ultimos_pedidos = "SELECT p.*, u.nome as cliente 
-                                                 FROM pedidos p 
-                                                 JOIN usuarios u ON p.usuario_id = u.id 
-                                                 ORDER BY p.data_pedido DESC 
-                                                 LIMIT 5";
-                        $stmt_pedidos = $db->prepare($query_ultimos_pedidos);
-                        $stmt_pedidos->execute();
-                        $ultimos_pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
-                        
-                        foreach($ultimos_pedidos as $pedido):
-                        ?>
-                        <div class="pedido-item">
-                            <div class="pedido-info">
-                                <strong>Pedido #<?= $pedido['id'] ?></strong>
-                                <span><?= $pedido['cliente'] ?></span>
-                            </div>
-                            <div class="pedido-valor">
-                                R$ <?= number_format($pedido['total'], 2, ',', '.') ?>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <h3>R$ <?= number_format($estatisticas['preco_medio'] ?? 0, 2, ',', '.') ?></h3>
+                        <p>Preço Médio</p>
                     </div>
                 </div>
             </div>
@@ -309,21 +200,21 @@ $totais_vendas = $stmt_totais->fetch(PDO::FETCH_ASSOC);
                     <div class="dashboard-produtos">
                         <?php foreach ($produtos as $produto): ?>
                         <div class="dashboard-produto">
-                            <img src="<?= $produto['imagem'] ?>" alt="<?= $produto['nome'] ?>">
+                            <img src="<?= $produto['imagem'] ?>" alt="<?= $produto['nome'] ?>" width="80" height="80">
                             <div class="produto-info">
                                 <h4><?= $produto['nome'] ?></h4>
                                 <p>R$ <?= number_format($produto['preco'], 2, ',', '.') ?></p>
                                 <span class="categoria"><?= ucfirst($produto['categoria']) ?></span>
                                 <?php if ($produto['destaque']): ?>
-                                    <span class="destaque-badge">Destaque</span>
+                                    <span class="destaque-badge">⭐ Destaque</span>
                                 <?php endif; ?>
                             </div>
                             <div class="produto-actions">
-                                <button class="btn-editar" onclick="editarProduto('<?= $produto['id'] ?>')">Editar</button>
+                                <button class="btn-editar" onclick="editarProduto(<?= $produto['id'] ?>)">✏️ Editar</button>
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="acao" value="remover">
                                     <input type="hidden" name="id" value="<?= $produto['id'] ?>">
-                                    <button type="submit" class="btn-remover" onclick="return confirm('Tem certeza?')">Remover</button>
+                                    <button type="submit" class="btn-remover" onclick="return confirm('Tem certeza que deseja remover este produto?')">🗑️ Remover</button>
                                 </form>
                             </div>
                         </div>
@@ -359,137 +250,82 @@ $totais_vendas = $stmt_totais->fetch(PDO::FETCH_ASSOC);
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
-            document.querySelector('.page-transition').style.opacity = '0';
+            const pageTransition = document.querySelector('.page-transition');
+            if (pageTransition) {
+                pageTransition.style.opacity = '0';
+            }
         }, 500);
         
-        // Gráfico de Vendas Diárias
-        const vendasCtx = document.getElementById('vendasChart').getContext('2d');
-        const vendasChart = new Chart(vendasCtx, {
-            type: 'line',
-            data: {
-                labels: [<?php 
-                    $labels = [];
-                    foreach(array_reverse($vendas_diarias) as $venda) {
-                        $labels[] = "'" . date('d/m', strtotime($venda['data'])) . "'";
+        // Tornar a função global para o HTML poder chamar
+        window.editarProduto = function(id) {
+            console.log('Editando produto ID:', id);
+            
+            // Buscar dados do produto via AJAX
+            fetch('api_produtos.php')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro na resposta da API');
                     }
-                    echo implode(', ', $labels);
-                ?>],
-                datasets: [{
-                    label: 'Vendas (R$)',
-                    data: [<?php 
-                        $data = [];
-                        foreach(array_reverse($vendas_diarias) as $venda) {
-                            $data[] = $venda['total_vendas'];
+                    return response.json();
+                })
+                .then(produtos => {
+                    const produto = produtos.find(p => p.id == id);
+                    if (produto) {
+                        console.log('Produto encontrado:', produto);
+                        
+                        document.getElementById('form-titulo').textContent = '✏️ Editar Produto';
+                        document.getElementById('acao').value = 'editar';
+                        document.getElementById('produto-id').value = produto.id;
+                        document.getElementById('nome').value = produto.nome;
+                        document.getElementById('preco').value = produto.preco;
+                        document.getElementById('categoria').value = produto.categoria;
+                        document.getElementById('descricao').value = produto.descricao;
+                        document.getElementById('imagem').value = produto.imagem;
+                        document.getElementById('destaque').checked = produto.destaque == 1;
+                        
+                        const btnCancelar = document.getElementById('btn-cancelar');
+                        if (btnCancelar) {
+                            btnCancelar.style.display = 'inline-block';
                         }
-                        echo implode(', ', $data);
-                    ?>],
-                    borderColor: '#a78bfa',
-                    backgroundColor: 'rgba(167, 139, 250, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-        
-        // Gráfico de Produtos Mais Vendidos
-        const produtosCtx = document.getElementById('produtosChart').getContext('2d');
-        const produtosChart = new Chart(produtosCtx, {
-            type: 'bar',
-            data: {
-                labels: [<?php 
-                    $labels = [];
-                    foreach($produtos_vendidos as $produto) {
-                        $labels[] = "'" . substr($produto['nome'], 0, 15) . "'";
-                    }
-                    echo implode(', ', $labels);
-                ?>],
-                datasets: [{
-                    label: 'Unidades Vendidas',
-                    data: [<?php 
-                        $data = [];
-                        foreach($produtos_vendidos as $produto) {
-                            $data[] = $produto['total_vendido'];
+                        
+                        // Scroll para o formulário
+                        const formContainer = document.querySelector('.form-container');
+                        if (formContainer) {
+                            formContainer.scrollIntoView({ behavior: 'smooth' });
                         }
-                        echo implode(', ', $data);
-                    ?>],
-                    backgroundColor: '#fbbf24'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
+                    } else {
+                        console.error('Produto não encontrado');
+                        alert('Erro: Produto não encontrado');
                     }
-                }
-            }
-        });
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar produto:', error);
+                    alert('Erro ao carregar dados do produto');
+                });
+        };
         
-        // Gráfico de Vendas por Categoria
-        const categoriasCtx = document.getElementById('categoriasChart').getContext('2d');
-        const categoriasChart = new Chart(categoriasCtx, {
-            type: 'doughnut',
-            data: {
-                labels: [<?php 
-                    $labels = [];
-                    foreach($vendas_categorias as $categoria) {
-                        $labels[] = "'" . ucfirst($categoria['categoria']) . "'";
-                    }
-                    echo implode(', ', $labels);
-                ?>],
-                datasets: [{
-                    data: [<?php 
-                        $data = [];
-                        foreach($vendas_categorias as $categoria) {
-                            $data[] = $categoria['receita'];
-                        }
-                        echo implode(', ', $data);
-                    ?>],
-                    backgroundColor: [
-                        '#a78bfa',
-                        '#fbbf24',
-                        '#68d391',
-                        '#f56565'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true
-            }
-        });
-        
-        function editarProduto(id) {
-            document.getElementById('form-titulo').textContent = '✏️ Editar Produto';
-            document.getElementById('acao').value = 'editar';
-            document.getElementById('produto-id').value = id;
-            document.getElementById('btn-cancelar').style.display = 'inline-block';
+        const btnCancelar = document.getElementById('btn-cancelar');
+        if (btnCancelar) {
+            btnCancelar.addEventListener('click', function() {
+                document.getElementById('produto-form').reset();
+                document.getElementById('form-titulo').textContent = '🆕 Adicionar Novo Produto';
+                document.getElementById('acao').value = 'adicionar';
+                this.style.display = 'none';
+            });
         }
-        
-        document.getElementById('btn-cancelar').addEventListener('click', function() {
-            document.getElementById('produto-form').reset();
-            document.getElementById('form-titulo').textContent = '🆕 Adicionar Novo Produto';
-            document.getElementById('acao').value = 'adicionar';
-            this.style.display = 'none';
-        });
     });
     
     document.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', function(e) {
             if (this.href && !this.href.includes('javascript')) {
                 e.preventDefault();
-                document.querySelector('.page-transition').style.opacity = '1';
+                const pageTransition = document.querySelector('.page-transition');
+                if (pageTransition) {
+                    pageTransition.style.opacity = '1';
+                }
                 setTimeout(() => {
                     window.location.href = this.href;
                 }, 500);

@@ -1,3 +1,12 @@
+
+console.log('Script carregado - verificando elementos...');
+
+// Depois de selecionar os elementos, verifique:
+console.log('Cor options:', document.querySelectorAll('.cor-option').length);
+console.log('Tamanho options:', document.querySelectorAll('.tamanho-option').length);
+console.log('Botões quantidade:', document.getElementById('decrease-qty'), document.getElementById('increase-qty'));
+console.log('Botões compra:', document.querySelector('.btn-comprar'), document.querySelector('.btn-comprar-agora'));
+
 // Carregar e exibir produtos
 document.addEventListener('DOMContentLoaded', function() {
     carregarProdutos();
