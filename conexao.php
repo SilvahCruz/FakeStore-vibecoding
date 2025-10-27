@@ -1,9 +1,9 @@
 <?php
 class Database {
-    $host = 'localhost';
-    $db_name = 'loja_galaxia';
-    $username = 'root';
-    $password = '';
+    $host = 'sql206.infinityfree.com';
+    $db_name = 'if0_40179266_loja_galaxia';
+    $username = 'if0_40179266';
+    $password = '999567421mat';
     $conn;
 
     public function getConnection() {
