@@ -1,7 +1,7 @@
 <?php
 class Database {
     private $host = 'sql206.infinityfree.com';
-    privte $db_name = 'if0_40179266_loja_galaxia';
+    private $db_name = 'if0_40179266_loja_galaxia';
     private $username = 'if0_40179266';
     private $password = '999567421mat';
     private $conn;
