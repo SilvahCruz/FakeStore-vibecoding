@@ -5,6 +5,10 @@ require_once 'conexao.php';
 $database = new Database();
 $db = $database->getConnection();
 
+if ($db === null) {
+    die("Erro: Não foi possível conectar ao banco de dados.");
+}
+
 // Buscar produtos em destaque
 $query = "SELECT * FROM produtos WHERE destaque = 1 ORDER BY data_criacao DESC LIMIT 4";
 $stmt = $db->prepare($query);
