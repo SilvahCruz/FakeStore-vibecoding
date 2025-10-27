@@ -1,10 +1,10 @@
 <?php
 class Database {
-    private $host = 'localhost';
-    private $db_name = 'loja_galaxia';
-    private $username = 'root';
-    private $password = '';
-    public $conn;
+    $host = 'localhost';
+    $db_name = 'loja_galaxia';
+    $username = 'root';
+    $password = '';
+    $conn;
 
     public function getConnection() {
         $this->conn = null;
